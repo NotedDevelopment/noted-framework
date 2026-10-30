@@ -105,6 +105,11 @@ async function pin(task) {
         if (!response.ok) throw new Error(`${repo}: HTTP ${response.status}. Set GITHUB_TOKEN if this is a rate limit.`)
         return { ...task, ref: await response.text() }
     }
+    // ox_inventory 2.48.1 waits on the database before registering its exports, so resources
+    // that call them on start fail with "No such export". Remove once upstream fixes it.
+    if (task.action === 'download_file' && task.url.endsWith('/ox_inventory/releases/latest/download/ox_inventory.zip')) {
+        return { ...task, url: task.url.replace('/latest/download/', '/download/v2.48.0/') }
+    }
     if (task.action === 'download_file' && task.url.includes('/releases/latest/download/')) {
         const response = await fetch(task.url, { redirect: 'manual' })
         const location = response.headers.get('location')
